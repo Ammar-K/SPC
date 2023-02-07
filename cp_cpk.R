@@ -1,30 +1,36 @@
 # Load packages
-
-
-library(tidyverse)
-library(qcc)
+library(tidyverse) # for creating and transforming data
+library(qcc) # for control charts and process capability
+library(SixSigma) # to use "ss.study.ca" function
 
 # generate data
- poles <-
+# We assume the following example: Contractors will install light poles.
+# the spacing between poles are variable of interest/ Critical To Quality (CTQ),
+# too much/little space between the poles will effect the lighting.
+# there are 4 teams.
+
+# Step 1: generate the data, this is not part of the six sigma,
+# as the data usually coming from the actual data from the process.
+poles <-
   tibble(distance = c(rnorm(100, 30.0, 0.01),
                       rnorm(100, 30.0, 0.1),
                       rnorm(100, 30.2, 0.01),
                       rnorm(100, 29.8, 0.1)),
          group = rep(1:4, each = 100))
 
- # create mean and sd
- poles_stat <-
-   poles |>
-   group_by(group) |>
-   summarise(mean = mean(distance),
-             sd = sd(distance)) |>
-   ungroup()
+# create mean and sd
+poles_stat <-
+  poles |>
+  group_by(group) |>
+  summarise(mean = mean(distance),
+            sd = sd(distance)) |>
+  ungroup()
 
- ### visual check
+### visual check
 ggplot(poles, aes(x= distance, fill= as.factor(group))) +
   geom_histogram(binwidth = 0.01) +
   facet_grid(facets = "group") +
- # geom_vline(xintercept = 30) +
+  # geom_vline(xintercept = 30) +
   geom_vline(data = poles_stat, aes(xintercept = mean), linetype = 2)+
   geom_vline(xintercept = c(29.5, 30.5), color = "red")+
   scale_x_continuous(limits = c(29.4, 30.6))
