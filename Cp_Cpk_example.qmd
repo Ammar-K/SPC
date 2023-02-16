@@ -1,18 +1,39 @@
-# Load packages
+---
+title: "Cp_Cpk_example"
+format: html
+---
+
+# SPC
+
+Salam, This is working example for my articles series on Statistical Process Control (SPC), for the original series check this post linkedin post
+
+# The example
+
+We assume the following example: Contractors will install light poles. the spacing between poles are variable of interest/ Critical To Quality (CTQ), too much/little space between the poles will effect the lighting.
+
+- Target: 30 m
+
+- USL: 30.5 m
+
+- LSL: 29.5 m
+
+there are 4 contractors.
+
+# Preparation
+
+## P.Step-1: Load packages
+
+```{r, echo=FALSE}
 library(tidyverse) # for creating and transforming data
 library(qcc) # for control charts and process capability
 library(SixSigma) # to use "ss.study.ca" function
-
-# generate data
-# We assume the following example: Contractors will install light poles.
-# the spacing between poles are variable of interest/ Critical To Quality (CTQ),
-# too much/little space between the poles will effect the lighting.
-# there are 4 teams.
+```
 
 
-# Step 1: -----------------------------------------------------------------
-#generate the data, this is not part of the six sigma,
-# as the data usually coming from the actual data from the process.
+## P.Step-2: generate the data
+This is not part of the six sigma, as the data usually coming from the actual data from the process.
+
+```{r, p.step_1}
 poles <-
   tibble(distance = c(rnorm(100, 30.0, 0.01),
                       rnorm(100, 30.0, 0.1),
@@ -20,8 +41,32 @@ poles <-
                       rnorm(100, 29.8, 0.1)),
          group = rep(1:4, each = 100))
 
-# Step 2: -----------------------------------------------------------------
-# create mean and sd
+```
+
+Let's have a look on the data
+
+```{r, p.step_2}
+
+knitr::kable(head(poles))
+
+```
+
+As you can see we have printed the top 10 (default head behavior) result in the data frame, however there is a merit in taking samples from each group, we can achieve this using the code below.
+
+```{r p.step_2.b}
+poles |>
+  group_by(group) |>
+  slice_sample(n = 3) |> knitr::kable()
+```
+
+
+# Analysis 
+
+## A.Step-1: add basic statstics
+
+create a data frame with mean and standard deviation.
+
+```{r, step_2}
 poles_stat <-
   poles |>
   group_by(group) |>
@@ -29,7 +74,13 @@ poles_stat <-
             sd = sd(distance)) |>
   ungroup()
 
-### visual check
+```
+
+
+## A.Step-2: Visual check
+
+
+```{r}
 ggplot(poles, aes(x= distance, fill= as.factor(group))) +
   geom_histogram(binwidth = 0.01) +
   facet_grid(facets = "group") +
@@ -38,8 +89,13 @@ ggplot(poles, aes(x= distance, fill= as.factor(group))) +
   geom_vline(xintercept = c(29.5, 30.5), color = "red")+
   scale_x_continuous(limits = c(29.4, 30.6))
 
+```
 
-### visual check
+
+
+# visual check
+
+```{r}
 ggplot(poles, aes(x= as.factor(group) , y= distance)) +
   geom_boxplot() +
   geom_jitter(alpha = 0.2, height = 0) +
@@ -48,23 +104,19 @@ ggplot(poles, aes(x= as.factor(group) , y= distance)) +
   geom_hline(yintercept = c(29.5, 30.5), color = "firebrick3") +
   labs(x = "distance", y = "group") +
   theme_bw()
+```
 
 
+# Anova and Tukey HSD test
 
-library(ggpubr)
-ggline(poles, x = "group", y = "distance",
-       add = c("mean_se", "jitter"),
-       ylab = "Weight", xlab = "Treatment")
-
-
-
-### Anova and Tukey HSD test
+```{r}
 anova_model <- aov(distance ~ as.factor(group), data = poles)
 anova_model |> summary()
 anova_model |> TukeyHSD()
+```
 
-###
 
+```{r}
 
 
 poles_group <- qccGroups(data = poles, distance, group)
@@ -83,11 +135,19 @@ SixSigma::ss.study.ca(xST = poles$distance[101:200],
                       USL = 30.5,
                       Target = 30)
 
-
-
 poles |>
   group_by(group) |>
   slice_sample(n = 3)
+```
+
+
+
+
+```{r control_chart}
+
+
+
+```
 
 
 
